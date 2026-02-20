@@ -162,9 +162,93 @@
         <div class="button-group">
             <button type="button" class="add-btn" onclick="addRow()">Add New Item</button>
             <button type="button" class="pdf-btn" onclick="generatePDF()">Create & Download PDF</button>
+            <button type="button" onclick="clearSavedData()" style="background:#6c757d; color:white;">
+    Clear Saved Data
+</button>
         </div>
     </form>
 </div>
+
+<script>
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("reportTitle").innerText = "Aging Report [" + today + "]";
+
+    // Load saved data when page opens
+    window.onload = function () {
+        const savedData = localStorage.getItem("agingReportData");
+        if (savedData) {
+            document.querySelector("#itemTable tbody").innerHTML = savedData;
+        }
+        attachInputListeners();
+    };
+
+    function addRow() {
+        const table = document.querySelector("#itemTable tbody");
+        const newRow = table.rows[0].cloneNode(true);
+
+        newRow.querySelectorAll("input").forEach(input => input.value = "");
+        table.appendChild(newRow);
+
+        attachInputListeners();
+        saveData();
+    }
+
+    function removeRow(button) {
+        const table = document.querySelector("#itemTable tbody");
+        if (table.rows.length > 1) {
+            button.closest("tr").remove();
+            saveData();
+        } else {
+            alert("At least one item row is required.");
+        }
+    }
+
+    function attachInputListeners() {
+        document.querySelectorAll("#itemTable input").forEach(input => {
+            input.oninput = saveData;
+        });
+    }
+
+    function saveData() {
+        const tableBody = document.querySelector("#itemTable tbody").innerHTML;
+        localStorage.setItem("agingReportData", tableBody);
+    }
+
+    function clearSavedData() {
+        if (confirm("Are you sure you want to clear all saved data?")) {
+            localStorage.removeItem("agingReportData");
+            location.reload();
+        }
+    }
+
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(16);
+        doc.text("Aging Report [" + today + "]", 14, 20);
+
+        let y = 30;
+        doc.setFontSize(10);
+
+        const rows = document.querySelectorAll("#itemTable tbody tr");
+
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll("input");
+            const rowData = Array.from(inputs).map(input => input.value || "-").join(" | ");
+
+            if (y > 280) {
+                doc.addPage();
+                y = 20;
+            }
+
+            doc.text(rowData, 14, y);
+            y += 8;
+        });
+
+        doc.save("Aging_Report_" + today + ".pdf");
+    }
+</script>
 
 <script>
     const today = new Date().toISOString().split('T')[0];
