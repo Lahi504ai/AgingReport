@@ -2,12 +2,16 @@
 <html>
 <head>
     <title>Aging Report</title>
+
+    <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- AutoTable Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         body {
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             display: flex;
             justify-content: center;
@@ -15,7 +19,7 @@
         }
 
         .container {
-            background: #ffffff;
+            background: white;
             width: 95%;
             max-width: 1100px;
             padding: 30px;
@@ -25,16 +29,13 @@
 
         h2 {
             text-align: center;
-            margin-bottom: 25px;
             color: #2a5298;
-            letter-spacing: 1px;
+            margin-bottom: 25px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            overflow: hidden;
-            border-radius: 10px;
         }
 
         thead {
@@ -47,32 +48,20 @@
             text-align: center;
         }
 
-        th {
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
         tbody tr:nth-child(even) {
             background: #f4f6fa;
         }
 
-        tbody tr:hover {
-            background: #eaf0ff;
-            transition: 0.3s;
-        }
-
         input {
             width: 100%;
-            padding: 8px;
+            padding: 6px;
             border-radius: 6px;
             border: 1px solid #ccc;
-            outline: none;
-            transition: 0.2s;
         }
 
         input:focus {
             border-color: #2a5298;
-            box-shadow: 0 0 5px rgba(42,82,152,0.4);
+            outline: none;
         }
 
         .button-group {
@@ -90,43 +79,12 @@
             transition: 0.3s;
         }
 
-        .add-btn {
-            background: #28a745;
-            color: white;
-        }
+        .add-btn { background: #28a745; color: white; }
+        .pdf-btn { background: #007bff; color: white; }
+        .clear-btn { background: #6c757d; color: white; }
+        .remove-btn { background: #dc3545; color: white; padding: 6px 10px; border-radius: 6px; }
 
-        .add-btn:hover {
-            background: #218838;
-            transform: translateY(-2px);
-        }
-
-        .pdf-btn {
-            background: #007bff;
-            color: white;
-        }
-
-        .pdf-btn:hover {
-            background: #0069d9;
-            transform: translateY(-2px);
-        }
-
-        .remove-btn {
-            background: #dc3545;
-            color: white;
-            border-radius: 6px;
-            padding: 6px 10px;
-        }
-
-        .remove-btn:hover {
-            background: #c82333;
-        }
-
-        @media (max-width: 768px) {
-            th, td {
-                font-size: 12px;
-                padding: 8px;
-            }
-        }
+        button:hover { opacity: 0.85; }
     </style>
 </head>
 
@@ -135,61 +93,55 @@
 <div class="container">
     <h2 id="reportTitle"></h2>
 
-    <form id="agingForm">
-        <table id="itemTable">
-            <thead>
-                <tr>
-                    <th>Item Code</th>
-                    <th>Item Name</th>
-                    <th>Quantity</th>
-                    <th>MPD</th>
-                    <th>EXD</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><input type="text"></td>
-                    <td><input type="text"></td>
-                    <td><input type="number"></td>
-                    <td><input type="date"></td>
-                    <td><input type="date"></td>
-                    <td><button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button></td>
-                </tr>
-            </tbody>
-        </table>
+    <table id="itemTable">
+        <thead>
+            <tr>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>MPD</th>
+                <th>EXD</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="number"></td>
+                <td><input type="date"></td>
+                <td><input type="date"></td>
+                <td><button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button></td>
+            </tr>
+        </tbody>
+    </table>
 
-        <div class="button-group">
-            <button type="button" class="add-btn" onclick="addRow()">Add New Item</button>
-            <button type="button" class="pdf-btn" onclick="generatePDF()">Create & Download PDF</button>
-            <button type="button" onclick="clearSavedData()" style="background:#6c757d; color:white;">
-    Clear Saved Data
-</button>
-        </div>
-    </form>
+    <div class="button-group">
+        <button class="add-btn" onclick="addRow()">Add New Item</button>
+        <button class="pdf-btn" onclick="generatePDF()">Download PDF</button>
+        <button class="clear-btn" onclick="clearSavedData()">Clear Saved Data</button>
+    </div>
 </div>
 
 <script>
     const today = new Date().toISOString().split('T')[0];
     document.getElementById("reportTitle").innerText = "Aging Report [" + today + "]";
 
-    // Load saved data when page opens
+    // Load saved data
     window.onload = function () {
-        const savedData = localStorage.getItem("agingReportData");
-        if (savedData) {
-            document.querySelector("#itemTable tbody").innerHTML = savedData;
+        const saved = localStorage.getItem("agingReportData");
+        if (saved) {
+            document.querySelector("#itemTable tbody").innerHTML = saved;
         }
-        attachInputListeners();
+        attachListeners();
     };
 
     function addRow() {
         const table = document.querySelector("#itemTable tbody");
         const newRow = table.rows[0].cloneNode(true);
-
         newRow.querySelectorAll("input").forEach(input => input.value = "");
         table.appendChild(newRow);
-
-        attachInputListeners();
+        attachListeners();
         saveData();
     }
 
@@ -199,23 +151,23 @@
             button.closest("tr").remove();
             saveData();
         } else {
-            alert("At least one item row is required.");
+            alert("At least one row required.");
         }
     }
 
-    function attachInputListeners() {
+    function attachListeners() {
         document.querySelectorAll("#itemTable input").forEach(input => {
             input.oninput = saveData;
         });
     }
 
     function saveData() {
-        const tableBody = document.querySelector("#itemTable tbody").innerHTML;
-        localStorage.setItem("agingReportData", tableBody);
+        const tableData = document.querySelector("#itemTable tbody").innerHTML;
+        localStorage.setItem("agingReportData", tableData);
     }
 
     function clearSavedData() {
-        if (confirm("Are you sure you want to clear all saved data?")) {
+        if (confirm("Clear all saved data?")) {
             localStorage.removeItem("agingReportData");
             location.reload();
         }
@@ -228,76 +180,37 @@
         doc.setFontSize(16);
         doc.text("Aging Report [" + today + "]", 14, 20);
 
-        let y = 30;
-        doc.setFontSize(10);
+        const tableColumn = ["Item Code", "Item Name", "Quantity", "MPD", "EXD"];
+        const tableRows = [];
 
-        const rows = document.querySelectorAll("#itemTable tbody tr");
-
-        rows.forEach(row => {
+        document.querySelectorAll("#itemTable tbody tr").forEach(row => {
             const inputs = row.querySelectorAll("input");
-            const rowData = Array.from(inputs).map(input => input.value || "-").join(" | ");
-
-            if (y > 280) {
-                doc.addPage();
-                y = 20;
-            }
-
-            doc.text(rowData, 14, y);
-            y += 8;
+            tableRows.push([
+                inputs[0].value || "-",
+                inputs[1].value || "-",
+                inputs[2].value || "-",
+                inputs[3].value || "-",
+                inputs[4].value || "-"
+            ]);
         });
 
-        doc.save("Aging_Report_" + today + ".pdf");
-    }
-</script>
-
-<script>
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById("reportTitle").innerText = "Aging Report [" + today + "]";
-
-    function addRow() {
-        const table = document.querySelector("#itemTable tbody");
-        const newRow = table.rows[0].cloneNode(true);
-
-        const inputs = newRow.querySelectorAll("input");
-        inputs.forEach(input => input.value = "");
-
-        table.appendChild(newRow);
-    }
-
-    function removeRow(button) {
-        const row = button.closest("tr");
-        const table = document.querySelector("#itemTable tbody");
-
-        if (table.rows.length > 1) {
-            row.remove();
-        } else {
-            alert("At least one item row is required.");
-        }
-    }
-
-    function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        doc.setFontSize(16);
-        doc.text("Aging Report [" + today + "]", 14, 20);
-
-        let y = 30;
-        doc.setFontSize(10);
-
-        const rows = document.querySelectorAll("#itemTable tbody tr");
-
-        rows.forEach(row => {
-            const inputs = row.querySelectorAll("input");
-            const rowData = Array.from(inputs).map(input => input.value || "-").join(" | ");
-
-            if (y > 280) {
-                doc.addPage();
-                y = 20;
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 30,
+            theme: "grid",
+            styles: {
+                fontSize: 10,
+                halign: "center"
+            },
+            headStyles: {
+                fillColor: [42, 82, 152],
+                textColor: 255,
+                fontStyle: "bold"
+            },
+            alternateRowStyles: {
+                fillColor: [240, 240, 240]
             }
-
-            doc.text(rowData, 14, y);
-            y += 8;
         });
 
         doc.save("Aging_Report_" + today + ".pdf");
