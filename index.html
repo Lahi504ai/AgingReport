@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Aging Report</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            background: #ffffff;
+            width: 95%;
+            max-width: 1100px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #2a5298;
+            letter-spacing: 1px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        thead {
+            background: #2a5298;
+            color: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f4f6fa;
+        }
+
+        tbody tr:hover {
+            background: #eaf0ff;
+            transition: 0.3s;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: #2a5298;
+            box-shadow: 0 0 5px rgba(42,82,152,0.4);
+        }
+
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 5px;
+            transition: 0.3s;
+        }
+
+        .add-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .add-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .pdf-btn {
+            background: #007bff;
+            color: white;
+        }
+
+        .pdf-btn:hover {
+            background: #0069d9;
+            transform: translateY(-2px);
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border-radius: 6px;
+            padding: 6px 10px;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        @media (max-width: 768px) {
+            th, td {
+                font-size: 12px;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2 id="reportTitle"></h2>
+
+    <form id="agingForm">
+        <table id="itemTable">
+            <thead>
+                <tr>
+                    <th>Item Code</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>MPD</th>
+                    <th>EXD</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="text"></td>
+                    <td><input type="text"></td>
+                    <td><input type="number"></td>
+                    <td><input type="date"></td>
+                    <td><input type="date"></td>
+                    <td><button type="button" class="remove-btn" onclick="removeRow(this)">Remove</button></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="button-group">
+            <button type="button" class="add-btn" onclick="addRow()">Add New Item</button>
+            <button type="button" class="pdf-btn" onclick="generatePDF()">Create & Download PDF</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("reportTitle").innerText = "Aging Report [" + today + "]";
+
+    function addRow() {
+        const table = document.querySelector("#itemTable tbody");
+        const newRow = table.rows[0].cloneNode(true);
+
+        const inputs = newRow.querySelectorAll("input");
+        inputs.forEach(input => input.value = "");
+
+        table.appendChild(newRow);
+    }
+
+    function removeRow(button) {
+        const row = button.closest("tr");
+        const table = document.querySelector("#itemTable tbody");
+
+        if (table.rows.length > 1) {
+            row.remove();
+        } else {
+            alert("At least one item row is required.");
+        }
+    }
+
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(16);
+        doc.text("Aging Report [" + today + "]", 14, 20);
+
+        let y = 30;
+        doc.setFontSize(10);
+
+        const rows = document.querySelectorAll("#itemTable tbody tr");
+
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll("input");
+            const rowData = Array.from(inputs).map(input => input.value || "-").join(" | ");
+
+            if (y > 280) {
+                doc.addPage();
+                y = 20;
+            }
+
+            doc.text(rowData, 14, y);
+            y += 8;
+        });
+
+        doc.save("Aging_Report_" + today + ".pdf");
+    }
+</script>
+
+</body>
+</html>
